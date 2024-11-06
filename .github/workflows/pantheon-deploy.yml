@@ -3,28 +3,28 @@ name: Pantheon Deploy
 on:
   push:
     branches:
-      - main  # Adjust to your branch
+      - main  # Replace with your branch if needed
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install Terminus (Pantheon CLI)
-        run: |
-          curl -O https://github.com/pantheon-systems/terminus/releases/latest/download/terminus.phar
-          chmod +x terminus.phar
-          sudo mv terminus.phar /usr/local/bin/terminus
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'  # Set Node.js version 14.x
 
-      - name: Log in to Pantheon
-        env:
-          PANTHEON_MACHINE_TOKEN: ${{ secrets.PANTHEON_MACHINE_TOKEN }}
+      - name: Install dependencies
         run: |
-          terminus auth:login --machine-token="$PANTHEON_MACHINE_TOKEN"
+          npm install axios # Install any necessary packages for your script
+          
+      - name: Run Node.js deploy script
+        run: |
+          node scripts/deploy.js # Make sure the path matches the location of your script
 
-      - name: Deploy to Pantheon
-        run: |
-          terminus connection:set $PANTHEON_SITE_UUID.dev git
-          git push ssh://codeserver.dev.$PANTHEON_SITE_UUID@codeserver.dev.$PANTHEON_SITE_UUID.drush.in:2222/~/repository.git main
+      - name: Output successful deployment
+        run: echo "Deployment to Pantheon was successful!"

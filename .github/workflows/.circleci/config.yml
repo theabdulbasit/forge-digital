@@ -1,0 +1,46 @@
+version: 2.1
+
+executors:
+  pantheon-executor:
+    docker:
+      - image: circleci/python:3.8  # Example image with support for Pantheon CLI (Terminus)
+    working_directory: ~/repo
+
+jobs:
+  deploy:
+    executor: pantheon-executor
+    steps:
+      # Checkout code from GitHub
+      - checkout
+      
+      # Install dependencies (e.g., Pantheon CLI - Terminus)
+      - run:
+          name: Install Terminus
+          command: |
+            curl -O https://github.com/pantheon-systems/terminus/releases/latest/download/terminus.phar
+            chmod +x terminus.phar
+            sudo mv terminus.phar /usr/local/bin/terminus
+      
+      # Pantheon Authentication (using your machine token stored as an environment variable)
+      - run:
+          name: Pantheon login
+          command: |
+            terminus auth:login --machine-token $PANTHEON_MACHINE_TOKEN
+      
+      # Set the correct connection to Pantheon site (Dev environment in this case)
+      - run:
+          name: Set Pantheon connection
+          command: |
+            terminus connection:set $PANTHEON_SITE_UUID.dev git
+
+      # Push code to Pantheon using Git
+      - run:
+          name: Push to Pantheon
+          command: |
+            git push ssh://codeserver.dev.$PANTHEON_SITE_UUID@codeserver.dev.$PANTHEON_SITE_UUID.drush.in:2222/~/repository.git main
+
+workflows:
+  version: 2
+  deploy:
+    jobs:
+      - deploy

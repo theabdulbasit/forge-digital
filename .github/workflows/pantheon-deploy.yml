@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main  # Replace with your branch if needed
+  workflow_dispatch:  # Allows you to manually trigger this workflow for testing
 
 jobs:
   deploy:
@@ -24,8 +25,18 @@ jobs:
         run: |
           terminus auth:login --machine-token="$PANTHEON_MACHINE_TOKEN"
 
+      # Connection Test Step
+      - name: Fetch Pantheon Site Info (Connection Test)
+        env:
+          PANTHEON_SITE_UUID: ${{ secrets.PANTHEON_SITE_UUID }}
+        run: |
+          terminus site:info $PANTHEON_SITE_UUID
+
       - name: Deploy to Pantheon
+        env:
+          PANTHEON_SITE_UUID: ${{ secrets.PANTHEON_SITE_UUID }}
         run: |
           terminus connection:set $PANTHEON_SITE_UUID.dev git
           git push ssh://codeserver.dev.$PANTHEON_SITE_UUID@codeserver.dev.$PANTHEON_SITE_UUID.drush.in:2222/~/repository.git main
+
 
